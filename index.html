@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="moko">
+<meta name="theme-color" content="#f6f1e4">
+<title>moko’s story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=LXGW+WenKai+TC:wght@400;700&display=swap">
+<style>
+  /* 版面：一頁一格，像拿在手上一格一格讀的報紙連環漫畫；只有一個世界（新聞紙＋黑墨），刻意單一主題 */
+  :root {
+    --paper: #f6f1e4;
+    --paper-deep: #ebe3cf;
+    --ink: #1d1a17;
+    --ink-soft: #5c5348;
+    --heart: #c8433a;
+    --frame: #1d1a17;
+    --font-hand: "Patrick Hand", "LXGW WenKai TC", "Comic Sans MS", "Bradley Hand", cursive;
+    --font-text: "Patrick Hand", "LXGW WenKai TC", "Kaiti TC", "BiauKai", cursive;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-text);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .stage {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding-inline: 16px;
+    padding-block: 12px;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+  .screen { display: grid; justify-items: center; gap: 18px; width: 100%; max-width: 560px; }
+
+  /* 開場 */
+  .cover h1 {
+    font-family: var(--font-hand);
+    font-weight: 700;
+    font-size: clamp(44px, 12vw, 72px);
+    line-height: 1;
+    margin: 0;
+    text-wrap: balance;
+    text-align: center;
+  }
+  .cover p { margin: 0; color: var(--ink-soft); font-size: 18px; letter-spacing: .08em; }
+  .zigzag {
+    width: min(260px, 70vw);
+    height: 14px;
+    background:
+      linear-gradient(135deg, var(--ink) 25%, transparent 25%) -7px 0 / 14px 14px,
+      linear-gradient(225deg, var(--ink) 25%, transparent 25%) -7px 0 / 14px 14px;
+    opacity: .85;
+  }
+  .cover button {
+    margin-top: 8px;
+    font: inherit;
+    font-size: 17px;
+    letter-spacing: .2em;
+    padding: 12px 34px;
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .cover button:focus-visible { outline: 3px solid var(--heart); outline-offset: 3px; }
+
+  /* 一格漫畫：用整張四格圖放大兩倍，再移到要看的那一格 */
+  .panel {
+    position: relative;
+    width: min(100%, 72vh);
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+    border: 3px solid var(--frame);
+    background: var(--paper-deep);
+    overflow: hidden;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .panel .layer {
+    position: absolute;
+    inset: 0;
+    background-size: 200% 200%;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity .55s ease;
+    animation: drift 9s ease-out both;
+  }
+  .panel .layer.on { opacity: 1; }
+  @keyframes drift { from { transform: scale(1.0); } to { transform: scale(1.06); } }
+
+  .caption {
+    min-height: 2.6em;
+    font-size: clamp(19px, 5.2vw, 24px);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .caption.on { opacity: 1; transform: none; }
+  .caption .who { color: var(--ink-soft); font-weight: 500; }
+
+  .dots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); opacity: .18; }
+  .dots i.done { opacity: .55; }
+  .dots i.now { opacity: 1; background: var(--heart); }
+
+  .hint {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: .2em;
+    color: var(--ink-soft);
+    transition: opacity .8s ease;
+  }
+  .back {
+    position: fixed;
+    left: 12px;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    font: inherit;
+    font-size: 13px;
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 4px 12px;
+    opacity: .5;
+    cursor: pointer;
+  }
+
+  /* 最後一頁：手寫字一筆一筆出現 */
+  .finale .panel .ask {
+    position: absolute;
+    left: 0; right: 0; top: 7%;
+    text-align: center;
+    font-family: var(--font-hand);
+    font-weight: 700;
+    font-size: clamp(38px, 10vw, 64px);
+    line-height: 1;
+    color: var(--ink);
+  }
+  .ask span { opacity: 0; display: inline-block; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
+  .ask span.on { opacity: 1; transform: none; }
+  .ask .heart { color: var(--heart); }
+
+  /* 願意／不願意 */
+  .answer { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; opacity: 0; transition: opacity .8s ease; position: relative; min-height: 52px; width: 100%; }
+  .answer.on { opacity: 1; }
+  .answer button {
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    padding: 12px 30px;
+    border-radius: 999px;
+    border: 3px solid var(--ink);
+    cursor: pointer;
+    transition: transform .25s ease;
+  }
+  .answer .yes { background: var(--heart); color: var(--paper); border-color: var(--heart); }
+  .answer .no { background: var(--paper); color: var(--ink); }
+  .answer .no.run { position: fixed; z-index: 5; }
+  .answer button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+  .celebrate { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; }
+  .celebrate b {
+    position: absolute;
+    bottom: -40px;
+    color: var(--heart);
+    font-size: 28px;
+    animation: rise 3.2s ease-in forwards;
+  }
+  @keyframes rise { to { transform: translateY(-115vh) rotate(25deg); opacity: .2; } }
+
+  .music {
+    position: fixed;
+    right: 12px;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    font: inherit;
+    font-size: 13px;
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 4px 12px;
+    opacity: .5;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .celebrate b { animation-duration: .01s; }
+    .panel .layer { animation: none; transition: none; }
+    .caption, .ask span { transition: none; }
+  }
+</style>
+
+<style>
+  body { margin: 0; }
+  .stage { padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" aria-live="polite"></main>
+<button class="back" id="back" type="button" hidden>Back</button>
+<div class="hint" id="hint" hidden>tap to continue</div>
+<button class="music" id="music" type="button" hidden>Music on</button>
+<audio id="bgm" src="music.mp3" loop preload="auto"></audio>
+
+<script>
+// 全部 32 鏡：圖片是 2×2 四格分鏡圖，依左上、右上、左下、右下的順序播放。
+// 字幕照「求婚分鏡圖.md」，沒寫字幕的鏡頭留空。
+const CAPTIONS = {
+  '01': 'It used to be just me and her.',
+  '05': 'She smells like someone else.',
+  '06': 'I like him.',
+  '13': 'She said yes.',
+  '14': 'It wasn\'t me.',
+  '17': 'This is my favorite.',
+  '20': 'They left me behind.',
+  '22': 'He moved away.',
+  '25': 'He\'s back!',
+  '26': 'She wants one too.',
+  '27': 'His turn.',
+  '28': '“Are you going to marry me?”',
+  '31': 'Quick, answer him!',
+};
+const SHOTS = Array.from({ length: 32 }, (_, i) => {
+  const id = String(i + 1).padStart(2, '0');
+  const s = { id, caption: CAPTIONS[id] || '' };
+  if (id === '28') s.who = 'Her: ';
+  if (id === '32') s.finale = true;
+  return s;
+});
+const POS = ['0% 0%', '100% 0%', '0% 100%', '100% 100%'];
+const ASK = 'Will you marry me?';
+
+// 沒放圖時的佔位圖，方便先看流程
+function placeholder(id) {
+  const cell = (x, y, n) => `<rect x="${x}" y="${y}" width="500" height="500" fill="#ebe3cf" stroke="#1d1a17" stroke-width="6"/><text x="${x+250}" y="${y+270}" font-size="64" text-anchor="middle" font-family="serif" fill="#5c5348">Shot ${id} · ${n}</text>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">${cell(0,0,1)}${cell(500,0,2)}${cell(0,500,3)}${cell(500,500,4)}</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+const srcOf = {};
+SHOTS.forEach(s => {
+  srcOf[s.id] = placeholder(s.id);
+  const img = new Image();
+  img.onload = () => { srcOf[s.id] = img.src; if (state.started && SHOTS[state.shot].id === s.id) render(); };
+  img.src = `images/${s.id}.png`;
+});
+
+const stage = document.getElementById('stage');
+const hint = document.getElementById('hint');
+const back = document.getElementById('back');
+const state = { started: false, shot: 0, step: 0, taps: 0 };
+
+function cover() {
+  stage.innerHTML = `<section class="screen cover">
+    <p>For Valtina</p>
+    <h1>moko’s story</h1>
+    <div class="zigzag" aria-hidden="true"></div>
+    <p>Seven years, as told by a Shiba</p>
+    <button type="button" id="open">Open</button>
+  </section>`;
+}
+
+// step 0–3：四格；step 4：字幕（沒有字幕的鏡頭跳過）
+function stepsOf(s) { return s.finale ? 4 : (s.caption ? 5 : 4); }
+
+function render() {
+  const s = SHOTS[state.shot];
+  const panelIndex = Math.min(state.step, 3);
+  const dots = SHOTS.map((_, i) => `<i class="${i < state.shot ? 'done' : i === state.shot ? 'now' : ''}"></i>`).join('');
+  const layers = POS.map((p, i) =>
+    `<div class="layer${i === panelIndex ? ' on' : ''}" style="background-image:url('${srcOf[s.id]}');background-position:${p}"></div>`).join('');
+  const isFinaleEnd = s.finale && state.step === 3;
+  const ask = isFinaleEnd
+    ? `<div class="ask" aria-label="${ASK}">${[...ASK].map(c => `<span>${c === ' ' ? '&nbsp;' : c}</span>`).join('')}</div>`
+    : '';
+  const cap = s.caption
+    ? `<div class="caption${state.step >= 4 ? ' on' : ''}">${s.who ? `<span class="who">${s.who}</span>` : ''}${s.caption}</div>`
+    : `<div class="caption"></div>`;
+  stage.innerHTML = `<section class="screen${s.finale ? ' finale' : ''}">
+    <div class="panel" role="img" aria-label="Shot ${s.id}, panel ${panelIndex + 1}">${layers}${ask}</div>
+    ${isFinaleEnd ? `<div class="answer" id="answer"><button type="button" class="yes" id="yes">Yes</button><button type="button" class="no" id="no">No</button></div>` : cap}
+    <div class="dots" aria-hidden="true">${dots}</div>
+  </section>`;
+  back.hidden = state.shot === 0 && state.step === 0;
+  if (isFinaleEnd) writeAsk();
+}
+
+function writeAsk() {
+  hint.hidden = true;
+  back.hidden = true;
+  const spans = stage.querySelectorAll('.ask span');
+  spans.forEach((sp, i) => setTimeout(() => sp.classList.add('on'), 900 + i * 170));
+  // 字寫完後停 4 秒，再出現按鈕
+  setTimeout(() => { const a = document.getElementById('answer'); if (a) a.classList.add('on'); }, 900 + spans.length * 170 + 4000);
+}
+
+// 「不願意」一碰就跑走
+function dodge(btn) {
+  const w = btn.offsetWidth, h = btn.offsetHeight;
+  const maxX = Math.max(16, window.innerWidth - w - 16);
+  const maxY = Math.max(16, window.innerHeight - h - 16);
+  btn.classList.add('run');
+  btn.style.left = (16 + Math.random() * (maxX - 16)) + 'px';
+  btn.style.top = (16 + Math.random() * (maxY - 16)) + 'px';
+}
+
+function celebrate() {
+  const a = document.getElementById('answer');
+  if (a) a.innerHTML = `<div class="caption on">We’re a family now.</div>`;
+  const layer = document.createElement('div');
+  layer.className = 'celebrate';
+  for (let i = 0; i < 40; i++) {
+    const b = document.createElement('b');
+    b.textContent = '♥';
+    b.style.left = Math.random() * 100 + 'vw';
+    b.style.animationDelay = (Math.random() * 2.5) + 's';
+    b.style.fontSize = (18 + Math.random() * 26) + 'px';
+    layer.appendChild(b);
+  }
+  document.body.appendChild(layer);
+}
+
+function next() {
+  if (!state.started) return;
+  const s = SHOTS[state.shot];
+  if (s.finale && state.step === 3) return; // 停在最後一頁
+  state.taps++;
+  if (state.taps === 3) hint.style.opacity = '0';
+  if (state.step + 1 < stepsOf(s)) { state.step++; }
+  else if (state.shot + 1 < SHOTS.length) { state.shot++; state.step = 0; }
+  render();
+}
+
+function prev() {
+  if (state.step > 0) state.step--;
+  else if (state.shot > 0) { state.shot--; state.step = stepsOf(SHOTS[state.shot]) - 1; }
+  render();
+}
+
+const bgm = document.getElementById('bgm');
+const musicBtn = document.getElementById('music');
+let hasMusic = false;
+bgm.addEventListener('canplay', () => { hasMusic = true; });
+bgm.addEventListener('error', () => { hasMusic = false; });
+musicBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (bgm.paused) { bgm.play().catch(() => {}); musicBtn.textContent = 'Music on'; }
+  else { bgm.pause(); musicBtn.textContent = 'Music off'; }
+});
+
+stage.addEventListener('click', e => {
+  if (e.target.closest('#open')) {
+    state.started = true;
+    hint.hidden = false;
+    bgm.volume = 0.6;
+    bgm.play().then(() => { musicBtn.hidden = false; }).catch(() => {});
+    render();
+    return;
+  }
+  if (e.target.closest('#yes')) { celebrate(); return; }
+  if (e.target.closest('#no')) { dodge(e.target.closest('#no')); return; }
+  next();
+});
+// 手機上手指一碰到就先跑，點不到
+document.addEventListener('pointerdown', e => {
+  const no = e.target.closest && e.target.closest('#no');
+  if (no) { e.preventDefault(); dodge(no); }
+}, { passive: false });
+document.addEventListener('mouseover', e => {
+  const no = e.target.closest && e.target.closest('#no');
+  if (no) dodge(no);
+});
+back.addEventListener('click', e => { e.stopPropagation(); prev(); });
+document.addEventListener('keydown', e => {
+  if (!state.started) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+  if (e.key === 'ArrowLeft') prev();
+});
+
+cover();
+</script>
+
+</body>
+</html>
