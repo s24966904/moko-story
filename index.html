@@ -218,8 +218,8 @@
 </head>
 <body>
 <main class="stage" id="stage" aria-live="polite"></main>
-<button class="back" id="back" type="button" hidden>Back</button>
-<div class="hint" id="hint" hidden>tap to continue</div>
+<button class="back" id="back" type="button" hidden aria-hidden="true">Back</button>
+<div class="hint" id="hint" hidden>tap right for next · left to go back</div>
 <button class="music" id="music" type="button" hidden>Music on</button>
 <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
 
@@ -301,7 +301,7 @@ function render() {
     ${isFinaleEnd ? `<div class="answer" id="answer"><button type="button" class="yes" id="yes">Yes</button><button type="button" class="no" id="no">No</button></div>` : cap}
     <div class="dots" aria-hidden="true">${dots}</div>
   </section>`;
-  back.hidden = state.shot === 0 && state.step === 0;
+  back.hidden = true;
   if (isFinaleEnd) writeAsk();
 }
 
@@ -352,6 +352,7 @@ function next() {
 }
 
 function prev() {
+  if (SHOTS[state.shot].finale && state.step === 3) return;
   if (state.step > 0) state.step--;
   else if (state.shot > 0) { state.shot--; state.step = stepsOf(SHOTS[state.shot]) - 1; }
   render();
@@ -379,7 +380,9 @@ stage.addEventListener('click', e => {
   }
   if (e.target.closest('#yes')) { celebrate(); return; }
   if (e.target.closest('#no')) { dodge(e.target.closest('#no')); return; }
-  next();
+  // 點畫面左側回上一格，右側到下一格
+  if (e.clientX < window.innerWidth * 0.35) prev();
+  else next();
 });
 // 手機上手指一碰到就先跑，點不到
 document.addEventListener('pointerdown', e => {
