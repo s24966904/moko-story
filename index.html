@@ -148,9 +148,8 @@
   }
 
   /* 最後一頁：手寫字一筆一筆出現 */
-  .finale .panel .ask {
-    position: absolute;
-    left: 0; right: 0; top: 7%;
+  .finale .ask {
+    min-height: 1em;
     text-align: center;
     font-family: var(--font-hand);
     font-weight: 700;
@@ -300,14 +299,15 @@ function render() {
         `<div class="layer${i === panelIndex ? ' on' : ''}" style="background-image:url('${url}');background-position:${p}"></div>`).join('')
     : `<div class="layer on${s.fit ? ' fit' : ' single'}" style="background-image:url('${url}')"></div>`;
   const isFinaleEnd = s.finale && state.step === 3;
-  const ask = isFinaleEnd
+  // 最後一鏡的圖上方沒有留白，字寫在圖的上面；先佔好位置，翻到最後一格時才一筆一筆寫出來
+  const ask = s.finale
     ? `<div class="ask" aria-label="${ASK}">${[...ASK].map(c => `<span>${c === ' ' ? '&nbsp;' : c}</span>`).join('')}</div>`
     : '';
   const cap = s.caption
     ? `<div class="caption${state.step >= panelsOf(s) ? ' on' : ''}">${s.who ? `<span class="who">${s.who}</span>` : ''}${s.caption}</div>`
     : `<div class="caption"></div>`;
   stage.innerHTML = `<section class="screen${s.finale ? ' finale' : ''}">
-    <div class="panel" role="img" aria-label="Panel ${panelIndex + 1}">${layers}${ask}</div>
+    ${ask}<div class="panel" role="img" aria-label="Panel ${panelIndex + 1}">${layers}</div>
     ${isFinaleEnd ? `<div class="answer" id="answer"><button type="button" class="yes" id="yes">Yes</button><button type="button" class="no" id="no">No</button></div>` : cap}
     <div class="dots" aria-hidden="true">${dots}</div>
   </section>`;
